@@ -1,34 +1,20 @@
-# 4D Gaussian Splatting for Real-Time Dynamic Scene Rendering
+# EndoGaussian: Gaussian Splatting for Deformable Surgical Scene Reconstruction
 
 ## arXiv Preprint
 
-### [Project Page](https://guanjunwu.github.io/4dgs/index.html)| [arXiv Paper](https://arxiv.org/abs/2310.08528)
+### [Project Page]()| [arXiv Paper]()
 
 
-[Guanjun Wu](https://guanjunwu.github.io/)<sup>1*</sup>, [Taoran Yi](https://github.com/taoranyi)<sup>2*</sup>,
-[Jiemin Fang](https://jaminfong.cn/)<sup>3‡</sup>, [Lingxi Xie](http://lingxixie.com/)<sup>3</sup>, </br>[Xiaopeng Zhang](https://scholar.google.com/citations?user=Ud6aBAcAAAAJ&hl=zh-CN)<sup>3</sup>, [Wei Wei](https://www.eric-weiwei.com/)<sup>1</sup>,[Wenyu Liu](http://eic.hust.edu.cn/professor/liuwenyu/)<sup>2</sup>, [Qi Tian](https://www.qitian1987.com/)<sup>3</sup> , [Xinggang Wang](https://xwcv.github.io)<sup>2‡✉</sup>
+[Yifan Liu](https://guanjunwu.github.io/)<sup>1*</sup>, [Chenxin Li](https://github.com/taoranyi)<sup>1*</sup>,
+[Chen Yang](https://jaminfong.cn/)<sup>2</sup>, [Yixuan Yuan](http://lingxixie.com/)<sup>1✉</sup>
 
-<sup>1</sup>School of CS, HUST &emsp; <sup>2</sup>School of EIC, HUST &emsp; <sup>3</sup>Huawei Inc. &emsp;
+<sup>1</sup>Department of Electronic Engineering, CUHK &emsp; <sup>2</sup>Department of Electrical Engineering &emsp;
 
-<sup>\*</sup> Equal Contributions. <sup>$\ddagger$</sup> Project Lead. <sup>✉</sup> Corresponding Author. 
+<sup>\*</sup> Equal Contributions. <sup>✉</sup> Corresponding Author. 
 
----------------------------------------------------
+-------------------------------------------
 
 ---
-
-![block](assets/teaserfig.png)   
-Our method converges very quickly and achieves real-time rendering speed.
-
-Colab demo:[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hustvl/4DGaussians/blob/master/4DGaussians.ipynb) (Thanks [camenduru](https://github.com/camenduru/4DGaussians-colab).)
-
-<video width="320" height="240" controls>
-  <source src="assets/teaservideo.mp4" type="video/mp4">
-</video>
-
-<video width="320" height="240" controls>
-  <source src="assets/cut_roasted_beef_time.mp4" type="video/mp4">
-</video>
-
 
 ## Environmental Setups
 Please follow the [3D-GS](https://github.com/graphdeco-inria/gaussian-splatting) to install the relative packages.
