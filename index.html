@@ -188,9 +188,16 @@
                 type="video/mp4">
       </video> -->
       <h2 class="subtitle has-text-centered">
+        <p>
         <span class="dnerf">EndoGaussian</span> 
-        reconstructs surgical scene under higher rendering efficacy (195 FPS real-time, 100x gain), better rendering quality
-        (35+ PSNR), and less training overhead (within 2 min/scene), paving the way for real-time intraoperative application.
+        reconstructs surgical scene under real-time rendering efficacy (195 FPS real-time, 100x gain), better rendering quality
+        (35+ PSNR), and less training overhead (within 2 min/scene).
+        </p>
+
+        <!-- <p>        
+          Below is the real video and our reconstruction of the "pull" and "cut" motions.
+        </p> -->
+        <!-- , paving the way for real-time intraoperative application. -->
         <!-- turns selfie videos from your phone into free-viewpoint portraits. -->
       </h2>
     </div>
@@ -198,41 +205,42 @@
 </section>
 
 
-<!-- <section class="hero is-light is-small">
+<section class="hero is-light is-small">
   <div class="hero-body">
     <div class="container">
       <div id="results-carousel" class="carousel results-carousel">
         <div class="item item-steve">
           <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/steve.mp4"
+            <source src="pulling_gt.mp4"
                     type="video/mp4">
           </video>
         </div>
         <div class="item item-chair-tp">
           <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/chair-tp.mp4"
+            <source src="pulling_ours.mp4"
                     type="video/mp4">
           </video>
         </div>
         <div class="item item-shiba">
           <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/shiba.mp4"
+            <source src="cutting_gt.mp4"
                     type="video/mp4">
+                    
           </video>
         </div>
         <div class="item item-fullbody">
           <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/fullbody.mp4"
+            <source src="cutting_ours.mp4"
                     type="video/mp4">
           </video>
         </div>
-        <div class="item item-blueshirt">
+        <!-- <div class="item item-blueshirt">
           <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
             <source src="./static/videos/blueshirt.mp4"
                     type="video/mp4">
           </video>
-        </div>
-        <div class="item item-mask">
+        </div> -->
+        <!-- <div class="item item-mask">
           <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
             <source src="./static/videos/mask.mp4"
                     type="video/mp4">
@@ -249,17 +257,29 @@
             <source src="./static/videos/toby2.mp4"
                     type="video/mp4">
           </video>
-        </div>
+        </div> -->
+
       </div>
+      </div>
+      
     </div>
+    
   </div>
-</section> -->
+  <h2 class="subtitle has-text-centered">
+    <p>
+      The real video input and the corresponding reconstruction by EndoGaussian for the "pull" and "cut" motions, respectively.
+      </p>
+  </h2>
+</section>
+
+
 
 
 <section class="section">
   <div class="container is-max-desktop">
     <!-- Abstract. -->
     <div class="columns is-centered has-text-centered">
+      
       <div class="column is-four-fifths">
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
