@@ -1,20 +1,26 @@
 ModelParams = dict(
     extra_mark = 'scared',
-    no_fine=True
+    no_fine=False,
+    init_pts=20_000
 )
 
 OptimizationParams = dict(
-    coarse_iterations = 10000,
+    coarse_iterations = 1000,
     iterations = 2000,
+    position_lr_init = 0.00016,
+    position_lr_final = 0.0000016,
+    position_lr_delay_mult = 0.01,
+    position_lr_max_steps = 2000,
+    
     deformation_lr_init = 0.00016,
     deformation_lr_final = 0.0000016,
     deformation_lr_delay_mult = 0.01,
     grid_lr_init = 0.0016,
     grid_lr_final = 0.000016,
-    pruning_interval = 3000,
+    
+    pruning_interval = 2000,
     percent_dense = 0.01,
-    opacity_reset_interval = 5000,
-    position_lr_max_steps = 10000
+    opacity_reset_interval = 3000,
 )
 
 ModelHiddenParams = dict(
@@ -31,4 +37,8 @@ ModelHiddenParams = dict(
     time_smoothness_weight = 0,
     l1_time_planes =  0,
     weight_decay_iteration=0,
+    no_dx=False,
+    no_ds=True,
+    no_dr=True,
+    no_do=False
 )

@@ -150,15 +150,18 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             gt_depths[gt_depths!=0] = 1 / gt_depths[gt_depths!=0]
             depth_loss = l1_loss(rendered_depths, gt_depths, masks)
         elif scene.mode == 'monocular':
-            rendered_depth = rendered_depths.reshape(-1, 1)
-            gt_depths = gt_depths.reshape(-1, 1)
-            depth_loss = 0.001 * (1 - pearson_corrcoef(gt_depths, rendered_depth))
+            rendered_depths_reshape = rendered_depths.reshape(-1, 1)
+            gt_depths_reshape = gt_depths.reshape(-1, 1)
+            mask_tmp = mask.reshape(-1)
+            rendered_depths_reshape, gt_depths_reshape = rendered_depths_reshape[mask_tmp!=0, :], gt_depths_reshape[mask_tmp!=0, :]
+            depth_loss =  0.001 * (1 - pearson_corrcoef(gt_depths_reshape, rendered_depths_reshape))
         else:
             raise ValueError(f"{scene.mode} is not implemented.")
         
         depth_tvloss = TV_loss(rendered_depths)
         img_tvloss = TV_loss(rendered_images)
         tv_loss = 0.03 * (img_tvloss + depth_tvloss)
+        
         loss = Ll1 + depth_loss + tv_loss
 
         psnr_ = psnr(rendered_images, gt_images, masks).mean().double()        
@@ -339,7 +342,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[i*500 for i in range(0,120)])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[3000, 6000, 9000, 10000, 14000, 20000, 30_000,45000,60000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[2000, 3000,4000, 5000, 6000, 9000, 10000, 14000, 20000, 30_000,45000,60000])
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--start_checkpoint", type=str, default = None)

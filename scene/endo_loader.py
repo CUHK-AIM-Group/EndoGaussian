@@ -291,7 +291,7 @@ class SCARED_Dataset(object):
         self.transform = T.ToTensor()
         self.white_bg = False
         self.depth_far_thresh = 300.0
-        self.depth_near_thresh = 30.0
+        self.depth_near_thresh = 0.03
         self.mode = mode
         self.init_pts = init_pts
 
@@ -312,7 +312,7 @@ class SCARED_Dataset(object):
         calibs_dir = osp.join(self.root_dir, "data", "frame_data")
         rgbs_dir = osp.join(self.root_dir, "data", "left_finalpass")
         disps_dir = osp.join(self.root_dir, "data", "disparity")
-        monodisps_dir = osp.join(self.root_dir, "data", "left_monodepth")
+        monodisps_dir = osp.join(self.root_dir, "data", "left_monodam")
         reproj_dir = osp.join(self.root_dir, "data", "reprojection_data")
         frame_ids = sorted([id[:-5] for id in os.listdir(calibs_dir)])
         frame_ids = frame_ids[::self.skip_every]
@@ -334,6 +334,7 @@ class SCARED_Dataset(object):
             K = np.eye(4)
             K[:3, :3] = np.array(calib_dict["camera-calibration"]["KL"])
             camera_mat.append(K)
+
             c2w = np.linalg.inv(np.array(calib_dict["camera-pose"]))
             if i_frame == 0:
                 c2w0 = c2w
@@ -360,13 +361,17 @@ class SCARED_Dataset(object):
                 depth[depth>self.depth_far_thresh] = 0
                 depth[depth<self.depth_near_thresh] = 0
             elif self.mode == 'monocular':
-                disp_dir = osp.join(monodisps_dir, f"{frame_id}_depth.png")
-                disp = iio.imread(disp_dir).astype(np.float32)[...,0] / 255.0
-                h, w = disp.shape
-                disp[disp!=0] = (1 / disp[disp!=0])
-                disp[disp==0] = disp.max()
-                depth = disp
-                depth = (depth - depth.min()) / (depth.max()-depth.min())
+                # disp_dir = osp.join(monodisps_dir, f"{frame_id}_depth.png")
+                # disp = iio.imread(disp_dir).astype(np.float32)[...,0] / 255.0
+                # h, w = disp.shape
+                # disp[disp!=0] = (1 / disp[disp!=0])
+                # disp[disp==0] = disp.max()
+                # depth = disp
+                # depth = (depth - depth.min()) / (depth.max()-depth.min())
+                # depth = self.depth_near_thresh + (self.depth_far_thresh-self.depth_near_thresh)*depth
+                disp_dir = osp.join(monodisps_dir, f"{frame_id}.png")
+                depth = iio.imread(disp_dir).astype(np.float32) / 255.0
+                h, w = depth.shape
                 depth = self.depth_near_thresh + (self.depth_far_thresh-self.depth_near_thresh)*depth
             else:
                 raise ValueError(f"{self.mode} is not implemented!")
@@ -409,9 +414,6 @@ class SCARED_Dataset(object):
             mask = self.masks[idx]
             mask = self.transform(mask).bool()
             depth = self.depths[idx]
-            close_depth = np.percentile(depth[depth!=0], 3.0)
-            inf_depth = np.percentile(depth[depth!=0], 99.8)
-            depth = np.clip(depth, close_depth, inf_depth)
             depth = torch.from_numpy(depth)
             time = self.times[idx]
             c2w = self.pose_mat[idx]
@@ -444,13 +446,13 @@ class SCARED_Dataset(object):
                 np.linalg.inv(pose),
                 project_valid_depth_only=True,
             )
-            pcd = pcd.random_down_sample(0.01)
-            pcd, _ = pcd.remove_radius_outlier(nb_points=5,
-                                        radius=np.asarray(pcd.compute_nearest_neighbor_distance()).mean() * 10.)
+            pcd = pcd.random_down_sample(0.1)
+            # pcd, _ = pcd.remove_radius_outlier(nb_points=5,
+            #                             radius=np.asarray(pcd.compute_nearest_neighbor_distance()).mean() * 10.)
             xyz, rgb = np.asarray(pcd.points).astype(np.float32), np.asarray(pcd.colors).astype(np.float32)
             normals = np.zeros((xyz.shape[0], 3))
             
-            o3d.io.write_point_cloud('tmp.ply', pcd)
+            # o3d.io.write_point_cloud('tmp.ply', pcd)
             
             return xyz, rgb, normals
         
@@ -458,8 +460,13 @@ class SCARED_Dataset(object):
             pts_total, colors_total = [], []
             for idx in self.train_idxs:
                 color, depth, mask = self.rgbs[idx], self.depths[idx], self.masks[idx]
+                if self.mode == 'binocular':
+                    mask = np.logical_and(mask, (depth>self.depth_near_thresh), (depth<self.depth_far_thresh))
                 pts, colors, _ = self.get_pts_cam(depth, mask, color, disable_mask=False)
                 pts = self.get_pts_wld(pts, self.pose_mat[idx])
+                pts_total.append(pts)
+                colors_total.append(colors)
+                
                 num_pts = pts.shape[0]
                 sel_idxs = np.random.choice(num_pts, int(0.1*num_pts), replace=True)
                 pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
@@ -472,24 +479,20 @@ class SCARED_Dataset(object):
             pts, colors = pts_total[sel_idxs], colors_total[sel_idxs]
             normals = np.zeros((pts.shape[0], 3))
             
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(np.array(pts_total))
-            pcd.colors = o3d.utility.Vector3dVector(np.array(colors_total))
-            o3d.io.write_point_cloud('tmp.ply', pcd)
+            # pcd = o3d.geometry.PointCloud()
+            # pcd.points = o3d.utility.Vector3dVector(np.array(pts))
+            # pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
+            # o3d.io.write_point_cloud('tmp.ply', pcd)
             
             return pts, colors, normals
 
-        elif mode == 'hgi_single':
+        elif mode == 'hgi_mono':
             idx = self.train_idxs[0]
             color, depth, mask = self.rgbs[idx], self.depths[idx], self.masks[idx]
-            close_depth = np.percentile(depth[depth!=0], 3.0)
-            inf_depth = np.percentile(depth[depth!=0], 99.8)
-            depth = np.clip(depth, close_depth, inf_depth)
-            
             pts, colors, _ = self.get_pts_cam(depth, mask, color, disable_mask=False)
             pts = self.get_pts_wld(pts, self.pose_mat[idx])
             num_pts = pts.shape[0]
-            sel_idxs = np.random.choice(num_pts, int(0.05*num_pts), replace=True)
+            sel_idxs = np.random.choice(num_pts, int(0.5*num_pts), replace=True)
             pts, colors = pts[sel_idxs], colors[sel_idxs]
             normals = np.zeros((pts.shape[0], 3))
             

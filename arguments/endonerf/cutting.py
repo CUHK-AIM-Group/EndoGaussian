@@ -22,8 +22,6 @@ ModelHiddenParams = dict(
      'grid_dimensions': 2,
      'input_coordinate_dim': 4,
      'output_coordinate_dim': 64,
-    #  'resolution': [64, 64, 64, 100]
-    #  'output_coordinate_dim': 256,
      'resolution': [64, 64, 64, 100]
     },
     multires = [1, 2, 4, 8],

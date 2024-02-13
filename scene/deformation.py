@@ -57,8 +57,11 @@ class Deformation(nn.Module):
     def forward_dynamic(self,rays_pts_emb, scales_emb, rotations_emb, opacity_emb, time_emb):
         hidden = self.query_time(rays_pts_emb, scales_emb, rotations_emb, time_emb).float()
         
-        dx = self.pos_deform(hidden)
-        pts = rays_pts_emb[:, :3] + dx
+        if self.args.no_dx:
+            pts = rays_pts_emb[:, :3]
+        else:
+            dx = self.pos_deform(hidden)
+            pts = rays_pts_emb[:, :3] + dx
         
         if self.args.no_ds:
             scales = scales_emb[:,:3]

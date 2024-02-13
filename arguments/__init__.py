@@ -95,7 +95,9 @@ class ModelHiddenParams(ParamGroup):
                              'resolution': [64, 64, 64, 25]
                             }
         self.multires = [1, 2, 4, 8]
+        self.no_dx=False
         self.no_grid=False
+        self.no_dx=False
         self.no_ds=False
         self.no_dr=False
         self.no_do=False
