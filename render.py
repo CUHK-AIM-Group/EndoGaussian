@@ -133,7 +133,7 @@ def render_sets(dataset : ModelParams, hyperparam, iteration : int, pipeline : P
         if not skip_train:
             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=False)
         if not skip_test:
-            render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=False)
+            render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=True)
         if not skip_video:
             render_set(dataset.model_path,"video",scene.loaded_iter, scene.getVideoCameras(),gaussians,pipeline,background, dataset.no_fine, reconstruct=False)
 

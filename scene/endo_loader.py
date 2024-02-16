@@ -164,8 +164,8 @@ class EndoNeRF_Dataset(object):
                 inf_depth = np.percentile(depth[depth!=0], 99.8)
                 depth = np.clip(depth, close_depth, inf_depth)
             elif self.mode == 'monocular':
-                depth = np.array(Image.open(depth_path))[..., 0]/255.0
-                depth[depth!=0] = (1 / depth[depth!=0])*0.1
+                depth = np.array(Image.open(self.depth_paths[idx]))[...,0] / 255.0
+                depth[depth!=0] = (1 / depth[depth!=0])*0.4
                 depth[depth==0] = depth.max()
                 depth = depth[...,None]
             else:
@@ -190,22 +190,27 @@ class EndoNeRF_Dataset(object):
         return cameras
     
     def get_init_pts(self):
-        pts_total, colors_total = [], []
-        for idx in self.train_idxs:
-            color, depth, mask = self.get_color_depth_mask(idx, mode=self.mode)
+        if self.mode == 'binocular':
+            pts_total, colors_total = [], []
+            for idx in self.train_idxs:
+                color, depth, mask = self.get_color_depth_mask(idx, mode=self.mode)
+                pts, colors, _ = self.get_pts_cam(depth, mask, color, disable_mask=False)
+                pts = self.get_pts_wld(pts, self.image_poses[idx])
+                num_pts = pts.shape[0]
+                sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=True)
+                pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
+                pts_total.append(pts_sel)
+                colors_total.append(colors_sel)
+            pts_total = np.concatenate(pts_total)
+            colors_total = np.concatenate(colors_total)
+            sel_idxs = np.random.choice(pts_total.shape[0], 30_000, replace=True)
+            pts, colors = pts_total[sel_idxs], colors_total[sel_idxs]
+            normals = np.zeros((pts.shape[0], 3))
+        elif self.mode == 'monocular':
+            color, depth, mask = self.get_color_depth_mask(0, mode=self.mode)
             pts, colors, _ = self.get_pts_cam(depth, mask, color, disable_mask=False)
-            pts = self.get_pts_wld(pts, self.image_poses[idx])
-            num_pts = pts.shape[0]
-            sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=True)
-            pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
-            pts_total.append(pts_sel)
-            colors_total.append(colors_sel)
-
-        pts_total = np.concatenate(pts_total)
-        colors_total = np.concatenate(colors_total)
-        sel_idxs = np.random.choice(pts_total.shape[0], 30_000, replace=True)
-        pts, colors = pts_total[sel_idxs], colors_total[sel_idxs]
-        normals = np.zeros((pts.shape[0], 3))
+            pts = self.get_pts_wld(pts, self.image_poses[0])
+            normals = np.zeros((pts.shape[0], 3))
         
         return pts, colors, normals
         
@@ -227,10 +232,10 @@ class EndoNeRF_Dataset(object):
             inf_depth = np.percentile(depth[depth!=0], 99.8)
             depth = np.clip(depth, close_depth, inf_depth)
         else:
-            depth = np.array(Image.open(self.depth_paths[idx]))[...,0]/255.0
-            depth[depth!=0] = (1 / depth[depth!=0])
+            depth = np.array(Image.open(self.depth_paths[idx]))[..., 0] / 255.0
+            depth[depth!=0] = (1 / depth[depth!=0])*0.4
             depth[depth==0] = depth.max()
-            
+
         mask = 1 - np.array(Image.open(self.masks_paths[idx]))/255.0
         color = np.array(Image.open(self.image_paths[idx]))/255.0
         return color, depth, mask
