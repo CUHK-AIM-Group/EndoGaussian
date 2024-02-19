@@ -9,3 +9,4 @@ plyfile
 imageio-ffmpeg
 imageio
 open3d
+torchmetrics

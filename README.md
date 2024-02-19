@@ -14,7 +14,6 @@
 ![introduction](assets/teaser.png)
 
 ## Environmental Setups
-Please follow the [3D-GS](https://github.com/graphdeco-inria/gaussian-splatting) to install the relative packages.
 ```bash
 git clone https://github.com/yifliu3/EndoGaussian.git
 cd EndoGaussian
@@ -26,7 +25,7 @@ pip install -r requirements.txt
 pip install -e submodules/depth-diff-gaussian-rasterization
 pip install -e submodules/simple-knn
 ```
-In our environment, we use pytorch=1.13.1+cu116.
+In our environment, we use pytorch=1.13.1, and the CUDA compile version is 11.7.
 ## Data Preparation
 **EndoNeRF:**  
 The dataset provided in [EndoNeRF](https://arxiv.org/abs/2206.15255) is used. You can download and process the dataset from their website (https://github.com/med-air/EndoNeRF). We use the two accessible clips including 'pulling_soft_tissues' and 'cutting_tissues_twice'.
