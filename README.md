@@ -1,6 +1,6 @@
-# EndoGaussian: Gaussian Splatting for Deformable Surgical Scene Reconstruction
+# EndoGaussian: Real-time Gaussian Splatting for Dynamic Endoscopic Scene Reconstruction
 
-### [Project Page](https://yifliu3.github.io/EndoGaussian/)| [arXiv Paper](http://arxiv.org/abs/2401.12561)
+### [Project Page](https://yifliu3.github.io/EndoGaussian/) | [arXiv Paper](http://arxiv.org/abs/2401.12561)
 
 
 [Yifan Liu](https://yifliu3.github.io/)<sup>1*</sup>, [Chenxin Li](https://xggnet.github.io/)<sup>1*</sup>,
