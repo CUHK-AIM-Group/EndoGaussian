@@ -48,24 +48,26 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     gt_depths = []
     mask_list = []
 
-    test_times = 20
+    for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
+        stage = 'coarse' if no_fine else 'fine'
+        rendering = render(view, gaussians, pipeline, background, stage=stage)
+        render_depths.append(rendering["depth"].cpu())
+        render_images.append(rendering["render"].cpu())
+        if name in ["train", "test", "video"]:
+            gt = view.original_image[0:3, :, :]
+            gt_list.append(gt)
+            mask = view.mask
+            mask_list.append(mask)
+            gt_depth = view.original_depth
+            gt_depths.append(gt_depth)
+    
+    test_times = 50
     for i in range(test_times):
         for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
             if idx == 0 and i == 0:
                 time1 = time()
             stage = 'coarse' if no_fine else 'fine'
             rendering = render(view, gaussians, pipeline, background, stage=stage)
-            if i == test_times-1:
-                render_depths.append(rendering["depth"].cpu())
-                render_images.append(rendering["render"].cpu())
-                if name in ["train", "test", "video"]:
-                    gt = view.original_image[0:3, :, :]
-                    gt_list.append(gt)
-                    mask = view.mask
-                    mask_list.append(mask)
-                    gt_depth = view.original_depth
-                    gt_depths.append(gt_depth)
-
     time2=time()
     print("FPS:",(len(views)-1)*test_times/(time2-time1))
     

@@ -10,7 +10,7 @@ import os.path as osp
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from scene.utils import Camera
+from scene.cameras import Camera
 from typing import NamedTuple
 from torch.utils.data import Dataset
 from utils.general_utils import PILtoTorch
@@ -41,35 +41,6 @@ class CameraInfo(NamedTuple):
     mask: np.array
     Zfar: float
     Znear: float
-
-def farthest_point_sample(xyz, npoint): 
-
-    """
-    Input:
-        xyz: pointcloud data, [B, N, 3]
-        npoint: number of samples
-    Return:
-        centroids: sampled pointcloud index, [B, npoint]
-    """
-    B, N, C = xyz.shape
-    centroids = np.zeros((B, npoint))
-    distance = np.ones((B, N)) * 1e10
-    batch_indices = np.arange(B)
-    barycenter = np.sum((xyz), 1)
-    barycenter = barycenter/xyz.shape[1]
-    barycenter = barycenter.reshape(B, 1, C)
-    dist = np.sum((xyz - barycenter) ** 2, -1)
-    farthest = np.argmax(dist,1)
-    
-    for i in range(npoint):
-        centroids[:, i] = farthest
-        centroid = xyz[batch_indices, farthest, :].reshape(B, 1, C)
-        dist = np.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest = np.argmax(distance, -1)
-
-    return centroids.astype(np.int32)
 
 class EndoNeRF_Dataset(object):
     def __init__(
@@ -183,10 +154,9 @@ class EndoNeRF_Dataset(object):
             FovX = focal2fov(self.focal[0], self.img_wh[0])
             FovY = focal2fov(self.focal[1], self.img_wh[1])
             
-            cameras.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image, depth=depth, mask=mask,
-                                image_path=self.image_paths[idx], image_name=self.image_paths[idx], width=image.shape[2], height=image.shape[1],
-                                time=time, Znear=None, Zfar=None))
-    
+            cameras.append(Camera(colmap_id=idx,R=R,T=T,FoVx=FovX,FoVy=FovY,image=image, depth=depth, mask=mask, gt_alpha_mask=None,
+                          image_name=f"{idx}",uid=idx,data_device=torch.device("cuda"),time=time,
+                          Znear=None, Zfar=None))
         return cameras
     
     def get_init_pts(self):
@@ -429,9 +399,10 @@ class SCARED_Dataset(object):
             focal_x, focal_y = camera_mat[0, 0], camera_mat[1, 1]
             FovX = focal2fov(focal_x, self.img_wh[0])
             FovY = focal2fov(focal_y, self.img_wh[1])
-            cameras.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image, depth=depth, mask=mask,
-                                image_path=None, image_name=None, width=self.img_wh[0], height=self.img_wh[1],
-                                time=time, Znear=self.depth_near_thresh, Zfar=self.depth_far_thresh))
+            
+            cameras.append(Camera(colmap_id=idx,R=R,T=T,FoVx=FovX,FoVy=FovY,image=image, depth=depth, mask=mask, gt_alpha_mask=None,
+                          image_name=f"{idx}",uid=idx,data_device=torch.device("cuda"),time=time,
+                          Znear=self.depth_near_thresh, Zfar=self.depth_far_thresh))
         return cameras
             
     def get_init_pts(self, mode='hgi'):
@@ -483,11 +454,6 @@ class SCARED_Dataset(object):
             sel_idxs = np.random.choice(pts_total.shape[0], self.init_pts, replace=True)
             pts, colors = pts_total[sel_idxs], colors_total[sel_idxs]
             normals = np.zeros((pts.shape[0], 3))
-            
-            # pcd = o3d.geometry.PointCloud()
-            # pcd.points = o3d.utility.Vector3dVector(np.array(pts))
-            # pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
-            # o3d.io.write_point_cloud('tmp.ply', pcd)
             
             return pts, colors, normals
 

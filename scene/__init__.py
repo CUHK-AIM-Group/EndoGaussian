@@ -52,11 +52,11 @@ class Scene:
         print("self.cameras_extent is ", self.cameras_extent)
 
         print("Loading Training Cameras")
-        self.train_camera = FourDGSdataset(scene_info.train_cameras, args)
+        self.train_camera = scene_info.train_cameras
         print("Loading Test Cameras")
-        self.test_camera = FourDGSdataset(scene_info.test_cameras, args)
+        self.test_camera = scene_info.test_cameras
         print("Loading Video Cameras")
-        self.video_camera = FourDGSdataset(scene_info.video_cameras,args)
+        self.video_camera = scene_info.video_cameras
         
         xyz_max = scene_info.point_cloud.points.max(axis=0)
         xyz_min = scene_info.point_cloud.points.min(axis=0)

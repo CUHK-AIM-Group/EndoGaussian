@@ -64,6 +64,9 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
     lpips_model = lpips.LPIPS(net="vgg").cuda()
     video_cams = scene.getVideoCameras()
     
+    if not viewpoint_stack:
+        viewpoint_stack = scene.getTrainCameras()
+    
     for iteration in range(first_iter, final_iter+1):        
         if network_gui.conn == None:
             network_gui.try_connect()
@@ -85,22 +88,9 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
         # Every 1000 its we increase the levels of SH up to a maximum degree
         if iteration % 500 == 0:
             gaussians.oneupSHdegree()
-        # Pick a random Camera
-        if not viewpoint_stack:
-            viewpoint_stack = scene.getTrainCameras()
-            batch_size = 16
-            viewpoint_stack_loader = DataLoader(viewpoint_stack, batch_size=batch_size,shuffle=True,num_workers=32,collate_fn=list)
-            loader = iter(viewpoint_stack_loader)
         
-        if opt.dataloader:
-            try:
-                viewpoint_cams = next(loader)
-            except StopIteration:
-                print("reset dataloader")
-                loader = iter(viewpoint_stack_loader)
-        else:
-            idx = randint(0, len(viewpoint_stack)-1)
-            viewpoint_cams = [viewpoint_stack[idx]]
+        idx = randint(0, len(viewpoint_stack)-1)
+        viewpoint_cams = [viewpoint_stack[idx]]
 
         # Render
         if (iteration - 1) == debug_from:
