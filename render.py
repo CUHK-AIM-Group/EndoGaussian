@@ -29,7 +29,7 @@ import cv2
 
 to8b = lambda x : (255*np.clip(x.cpu().numpy(),0,1)).astype(np.uint8)
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, no_fine, reconstruct=False):
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background, no_fine, render_test=False, reconstruct=False):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     depth_path = os.path.join(model_path, name, "ours_{}".format(iteration), "depth")
     gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
@@ -61,15 +61,16 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             gt_depth = view.original_depth
             gt_depths.append(gt_depth)
     
-    test_times = 50
-    for i in range(test_times):
-        for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-            if idx == 0 and i == 0:
-                time1 = time()
-            stage = 'coarse' if no_fine else 'fine'
-            rendering = render(view, gaussians, pipeline, background, stage=stage)
-    time2=time()
-    print("FPS:",(len(views)-1)*test_times/(time2-time1))
+    if render_test:
+        test_times = 50
+        for i in range(test_times):
+            for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
+                if idx == 0 and i == 0:
+                    time1 = time()
+                stage = 'coarse' if no_fine else 'fine'
+                rendering = render(view, gaussians, pipeline, background, stage=stage)
+        time2=time()
+        print("FPS:",(len(views)-1)*test_times/(time2-time1))
     
     count = 0
     print("writing training images.")
@@ -137,7 +138,7 @@ def render_sets(dataset : ModelParams, hyperparam, iteration : int, pipeline : P
         if not skip_test:
             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=False)
         if not skip_video:
-            render_set(dataset.model_path,"video",scene.loaded_iter, scene.getVideoCameras(),gaussians,pipeline,background, dataset.no_fine, reconstruct=False)
+            render_set(dataset.model_path,"video",scene.loaded_iter, scene.getVideoCameras(),gaussians,pipeline,background, dataset.no_fine, render_test=True, reconstruct=False)
 
 def reconstruct_point_cloud(images, masks, depths, camera_parameters, name):
     import cv2
