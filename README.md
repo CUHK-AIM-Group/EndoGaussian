@@ -74,10 +74,6 @@ python metrics.py --model_path output/endonerf/pulling
 
 ---
 ## Contributions
-
-**This project is still under development. Please feel free to raise issues or submit pull requests to contribute to our codebase.**
-
----
 Some source code of ours is borrowed from [3DGS](https://github.com/graphdeco-inria/gaussian-splatting), [4DGS](https://github.com/hustvl/4DGaussians), and [EndoNeRF](https://github.com/med-air/EndoNeRF). Thanks for their contributions. 
 
 
