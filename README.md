@@ -54,13 +54,15 @@ For training scenes such as `pulling_soft_tissues`, run
 python train.py -s data/endonerf/pulling --port 6017 --expname endonerf/pulling --configs arguments/endonerf/pulling.py 
 ``` 
 You can customize your training config through the config files.
-## Rendering
+## Rendering & Reconstruction(optional)
 Run the following script to render the images.  
 
 ```
-python render.py --model_path output/endonerf/pulling  --skip_train --configs arguments/endonerf/pulling.py
+python render.py --model_path output/endonerf/pulling  --skip_train --skip_video --configs arguments/endonerf/pulling.py
 ```
 You can use `--skip_train`, `--skip_test`, and `--skip_video` to skip rendering images of training, testing, and video set. By default, all three sets are rendered.
+
+Besides, we also provide point cloud reconstruction function, you can add extra arguments `--reconstruct` to activate it.
 
 ## Evaluation
 You can just run the following script to evaluate the model.  
@@ -76,7 +78,7 @@ python metrics.py --model_path output/endonerf/pulling
 **This project is still under development. Please feel free to raise issues or submit pull requests to contribute to our codebase.**
 
 ---
-Some source code of ours is borrowed from [3DGS](https://github.com/graphdeco-inria/gaussian-splatting), [4DGS](https://github.com/hustvl/4DGaussians), and [EndoNeRF](https://github.com/med-air/EndoNeRF).
+Some source code of ours is borrowed from [3DGS](https://github.com/graphdeco-inria/gaussian-splatting), [4DGS](https://github.com/hustvl/4DGaussians), and [EndoNeRF](https://github.com/med-air/EndoNeRF). Thanks for their contributions. 
 
 
 ## Citation
