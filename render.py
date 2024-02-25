@@ -26,6 +26,15 @@ import open3d as o3d
 from utils.graphics_utils import fov2focal
 import cv2
 
+import os
+
+# 设置要使用的CPU核心列表
+cpu_list = [0]
+
+# 将当前进程限制在指定的CPU核心上运行
+os.sched_setaffinity(0, cpu_list)
+
+
 
 to8b = lambda x : (255*np.clip(x.cpu().numpy(),0,1)).astype(np.uint8)
 
@@ -126,6 +135,13 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         reconstruct_point_cloud(render_images, mask_list, render_depths, camera_parameters, name)
 
 def render_sets(dataset : ModelParams, hyperparam, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, skip_video: bool, reconstruct: bool):
+    
+    # 设置要使用的CPU数量
+    cpu_list = list(range(cpu_count))[1:2]  # 假设要限制为前三个CPU核心
+
+    # 设置当前进程的CPU亲和性
+    psutil.Process().cpu_affinity(cpu_list)
+    
     with torch.no_grad():
         gaussians = GaussianModel(dataset.sh_degree, hyperparam)
         scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False, load_coarse=dataset.no_fine)
@@ -176,6 +192,18 @@ def reconstruct_point_cloud(images, masks, depths, camera_parameters, name):
         o3d.io.write_point_cloud(os.path.join(output_frame_folder, 'frame_{}.ply'.format(i_frame)), pcd)
 
 if __name__ == "__main__":
+    import psutil
+
+    # 获取可用的CPU数量
+    cpu_count = psutil.cpu_count()
+    print(cpu_count)
+
+    # 设置要使用的CPU数量
+    cpu_list = list(range(cpu_count))[1:2]  # 假设要限制为前三个CPU核心
+
+    # 设置当前进程的CPU亲和性
+    psutil.Process().cpu_affinity(cpu_list)
+
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
     model = ModelParams(parser, sentinel=True)
