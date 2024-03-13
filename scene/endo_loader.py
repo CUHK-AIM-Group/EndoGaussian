@@ -22,7 +22,7 @@ from tqdm import trange
 import imageio.v2 as iio
 import cv2
 import torch
-import time
+import fpsample
 
 
 class CameraInfo(NamedTuple):
@@ -159,7 +159,7 @@ class EndoNeRF_Dataset(object):
                           Znear=None, Zfar=None))
         return cameras
     
-    def get_init_pts(self):
+    def get_init_pts(self, sampling='random'):
         if self.mode == 'binocular':
             pts_total, colors_total = [], []
             for idx in self.train_idxs:
@@ -167,7 +167,12 @@ class EndoNeRF_Dataset(object):
                 pts, colors, _ = self.get_pts_cam(depth, mask, color, disable_mask=False)
                 pts = self.get_pts_wld(pts, self.image_poses[idx])
                 num_pts = pts.shape[0]
-                sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=True)
+                if sampling == 'fps':
+                    sel_idxs = fpsample.bucket_fps_kdline_sampling(pts, int(0.01*num_pts), h=3)
+                elif sampling == 'random':
+                    sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=True)
+                else:
+                    raise ValueError(f'{sampling} sampling has not been implemented yet.')
                 pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
                 pts_total.append(pts_sel)
                 colors_total.append(colors_sel)
@@ -405,7 +410,7 @@ class SCARED_Dataset(object):
                           Znear=self.depth_near_thresh, Zfar=self.depth_far_thresh))
         return cameras
             
-    def get_init_pts(self, mode='hgi'):
+    def get_init_pts(self, mode='hgi', sampling='random'):
         if mode == 'o3d':
             pose = self.pose_mat[0]
             K = self.camera_mat[0][:3, :3]
@@ -444,7 +449,13 @@ class SCARED_Dataset(object):
                 colors_total.append(colors)
                 
                 num_pts = pts.shape[0]
-                sel_idxs = np.random.choice(num_pts, int(0.1*num_pts), replace=True)
+                if sampling == 'fps':
+                    sel_idxs = fpsample.bucket_fps_kdline_sampling(pts, int(0.1*num_pts), h=3)
+                elif sampling == 'random':
+                    sel_idxs = np.random.choice(num_pts, int(0.1*num_pts), replace=True)
+                else:
+                    raise ValueError(f'{sampling} sampling has not been implemented yet.')
+                
                 pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
                 pts_total.append(pts_sel)
                 colors_total.append(colors_sel)
