@@ -170,7 +170,7 @@ class EndoNeRF_Dataset(object):
                 if sampling == 'fps':
                     sel_idxs = fpsample.bucket_fps_kdline_sampling(pts, int(0.01*num_pts), h=3)
                 elif sampling == 'random':
-                    sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=True)
+                    sel_idxs = np.random.choice(num_pts, int(0.01*num_pts), replace=False)
                 else:
                     raise ValueError(f'{sampling} sampling has not been implemented yet.')
                 pts_sel, colors_sel = pts[sel_idxs], colors[sel_idxs]
@@ -452,7 +452,7 @@ class SCARED_Dataset(object):
                 if sampling == 'fps':
                     sel_idxs = fpsample.bucket_fps_kdline_sampling(pts, int(0.1*num_pts), h=3)
                 elif sampling == 'random':
-                    sel_idxs = np.random.choice(num_pts, int(0.1*num_pts), replace=True)
+                    sel_idxs = np.random.choice(num_pts, int(0.1*num_pts), replace=False)
                 else:
                     raise ValueError(f'{sampling} sampling has not been implemented yet.')
                 
