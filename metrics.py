@@ -86,7 +86,7 @@ def readImages(renders_dir, gt_dir, depth_dir, gtdepth_dir, masks_dir):
         gts.append(tf.to_tensor(gt).unsqueeze(0)[:, :3, :, :].cuda())
         depths.append(torch.from_numpy(depth).unsqueeze(0).unsqueeze(1)[:, :, :, :].cuda())
         gt_depths.append(torch.from_numpy(gt_depth).unsqueeze(0).unsqueeze(1)[:, :3, :, :].cuda())
-        masks.append(tf.to_tensor(mask).unsqueeze(0).cuda())
+        masks.append(tf.to_tensor(mask).unsqueeze(0)[:, 0:1, :, :].cuda())
         
         image_names.append(fname)
     return renders, gts, depths, gt_depths, masks, image_names
@@ -140,7 +140,10 @@ def evaluate(model_paths):
                     lpipss.append(cal_lpips(render, gt))
                     if (gt_depth!=0).sum() < 10:
                         continue
-                    rmses.append(rmse(depth, gt_depth, mask))
+
+                    depth = depth * mask
+                    gt_depth = gt_depth * mask
+                    rmses.append(rmse(depth, gt_depth))
 
                 print("Scene: ", scene_dir,  "SSIM : {:>12.7f}".format(torch.tensor(ssims).mean(), ".5"))
                 print("Scene: ", scene_dir,  "PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))

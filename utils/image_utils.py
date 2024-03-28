@@ -34,7 +34,7 @@ def psnr(img1, img2, mask=None):
 
     return 20 * torch.log10(1.0 / torch.sqrt(mse_mask))
 
-def rmse(a, b, mask):
+def rmse(a, b, mask=None):
     """Compute rmse.
     """
     if torch.is_tensor(a):
@@ -43,9 +43,14 @@ def rmse(a, b, mask):
         b = tensor2array(b)
     if torch.is_tensor(mask):
         mask = tensor2array(mask)
-    if len(mask.shape) == len(a.shape) - 1:
-        mask = mask[..., None]
-    mask_sum = np.sum(mask) + 1e-10
-    rmse = (((a - b)**2 * mask).sum() / (mask_sum))**0.5
+
+    if mask is None:
+        rmse = (((a - b)**2).sum() / (a.shape[-1]*a.shape[-2]))**0.5
+    else:
+        if len(mask.shape) == len(a.shape) - 1:
+            mask = mask[..., None]
+        mask_sum = np.sum(mask) + 1e-10
+        rmse = (((a - b)**2 * mask).sum() / (mask_sum))**0.5
+    
     return rmse
 
