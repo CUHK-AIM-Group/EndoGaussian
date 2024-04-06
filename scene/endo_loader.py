@@ -85,7 +85,8 @@ class EndoNeRF_Dataset(object):
         self.K = np.array([[focal, 0 , W//2],
                                     [0, focal, H//2],
                                     [0, 0, 1]]).astype(np.float32)
-        poses = np.concatenate([poses[..., :1], -poses[..., 1:2], -poses[..., 2:3], poses[..., 3:4]], -1)
+        # poses = np.concatenate([poses[..., :1], -poses[..., 1:2], -poses[..., 2:3], poses[..., 3:4]], -1)
+        poses = np.concatenate([poses[..., :1], poses[..., 1:2], poses[..., 2:3], poses[..., 3:4]], -1)
         
         # prepare poses
         self.image_poses = []
