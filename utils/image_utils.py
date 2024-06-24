@@ -11,6 +11,12 @@
 
 import numpy as np
 import torch
+from typing import List
+import re
+import subprocess
+import os
+import tempfile
+from PIL import Image
 
 
 def tensor2array(tensor):
@@ -54,3 +60,40 @@ def rmse(a, b, mask=None):
     
     return rmse
 
+
+
+def flip(pred_frames: List[np.ndarray], gt_frames: List[np.ndarray], interval: int = 10) -> float:
+    
+    def extract_from_result(text: str, prompt: str):
+        m = re.search(prompt, text)
+        return float(m.group(1))
+
+    all_results = []
+
+    pred_frames = [e.squeeze(0).permute(1, 2, 0).cpu().numpy() for e in pred_frames]
+    gt_frames = [e.squeeze(0).permute(1, 2, 0).cpu().numpy() for e in gt_frames]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pred_fname = os.path.join(tmpdir, "pred.png")
+        gt_fname = os.path.join(tmpdir, "gt.png")
+        for i in range(len(pred_frames)):
+            write_png(pred_fname, pred_frames[i])
+            write_png(gt_fname, gt_frames[i])
+            result = subprocess.check_output(
+                ['python', 'flip/flip.py', '--reference', gt_fname, '--test', pred_fname]
+            ).decode()
+            all_results.append(extract_from_result(result, r'Mean: (\d+\.\d+)'))
+    return sum(all_results) / len(all_results)
+
+
+def write_png(path, data):
+    """Writes an PNG image to some path.
+
+    Args:
+        path (str): Path to save the PNG.
+        data (np.array): HWC image.
+
+    Returns:
+        (void): Writes to path.
+    """
+    Image.fromarray(data).save(path)

@@ -21,9 +21,12 @@ import json
 from tqdm import tqdm
 from utils.image_utils import psnr
 from utils.image_utils import rmse
+from utils.image_utils import flip
+
 from argparse import ArgumentParser
 import numpy as np
 
+to8b = lambda x : (255*x).to(torch.uint8)
 
 def array2tensor(array, device="cuda", dtype=torch.float32):
     return torch.tensor(array, dtype=dtype, device=device)
@@ -128,36 +131,54 @@ def evaluate(model_paths):
 
                 ssims = []
                 psnrs = []
+                psnrs_star = []
                 lpipss = []
                 rmses = []
-                                
+                        
+                render_wmask = []
+                gt_wmask = []     
                 for idx in tqdm(range(len(renders)), desc="Metric evaluation progress"):
                     render, gt, depth, gt_depth, mask = renders[idx], gts[idx], depths[idx], gt_depths[idx], masks[idx]
+                    
+                    psnrs_star.append(psnr(render, gt, mask))
+                    
                     render = render * mask
                     gt = gt * mask
+                    render_wmask.append(render)
+                    gt_wmask.append(gt)
                     psnrs.append(psnr(render, gt))
                     ssims.append(ssim(render, gt))
                     lpipss.append(cal_lpips(render, gt))
+                    
                     if (gt_depth!=0).sum() < 10:
                         continue
-
-                    depth = depth * mask
-                    gt_depth = gt_depth * mask
+                    
+                    tmp_mask = gt_depth != 0
+                    depth_mask = torch.logical_and(tmp_mask, mask)
+                    depth = depth * depth_mask
+                    gt_depth = gt_depth * depth_mask
                     rmses.append(rmse(depth, gt_depth))
+                
+                flipped_metrics = flip([to8b(e) for e in render_wmask], [to8b(g) for g in gt_wmask], interval=10)
 
                 print("Scene: ", scene_dir,  "SSIM : {:>12.7f}".format(torch.tensor(ssims).mean(), ".5"))
                 print("Scene: ", scene_dir,  "PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))
+                print("Scene: ", scene_dir,  "PSNR* : {:>12.7f}".format(torch.tensor(psnrs_star).mean(), ".5"))
                 print("Scene: ", scene_dir,  "LPIPS: {:>12.7f}".format(torch.tensor(lpipss).mean(), ".5"))
+                print("Scene: ", scene_dir,  "FLIP: {:>12.7f}".format(torch.tensor(flipped_metrics).mean(), ".5"))
                 print("Scene: ", scene_dir,  "RMSE: {:>12.7f}".format(torch.tensor(rmses).mean(), ".5"))
-                print("")
 
                 full_dict[scene_dir][method].update({"SSIM": torch.tensor(ssims).mean().item(),
                                                         "PSNR": torch.tensor(psnrs).mean().item(),
+                                                        "PSNR*": torch.tensor(psnrs_star).mean().item(),
                                                         "LPIPS": torch.tensor(lpipss).mean().item(),
+                                                        "FLIP": torch.tensor(flipped_metrics).mean().item(),
                                                         "RMSE": torch.tensor(rmses).mean().item()})
                 per_view_dict[scene_dir][method].update({"SSIM": {name: ssim for ssim, name in zip(torch.tensor(ssims).tolist(), image_names)},
                                                             "PSNR": {name: psnr for psnr, name in zip(torch.tensor(psnrs).tolist(), image_names)},
+                                                            "PSNR*": {name: psnr for psnr, name in zip(torch.tensor(psnrs_star).tolist(), image_names)},
                                                             "LPIPS": {name: lp for lp, name in zip(torch.tensor(lpipss).tolist(), image_names)},
+                                                            # "FLIP": {name: lp for lp, name in zip(torch.tensor(flipped_metrics).tolist(), image_names)},
                                                             "RMSES": {name: lp for lp, name in zip(torch.tensor(rmses).tolist(), image_names)}})
 
             with open(scene_dir + "/results.json", 'w') as fp:

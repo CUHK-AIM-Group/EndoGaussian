@@ -28,10 +28,7 @@ import cv2
 
 import os
 
-# 设置要使用的CPU核心列表
 cpu_list = [0]
-
-# 将当前进程限制在指定的CPU核心上运行
 os.sched_setaffinity(0, cpu_list)
 
 
@@ -136,10 +133,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
 
 def render_sets(dataset : ModelParams, hyperparam, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, skip_video: bool, reconstruct: bool):
     
-    # 设置要使用的CPU数量
-    cpu_list = list(range(cpu_count))[1:2]  # 假设要限制为前三个CPU核心
-
-    # 设置当前进程的CPU亲和性
+    cpu_list = list(range(cpu_count))[1:2]
     psutil.Process().cpu_affinity(cpu_list)
     
     with torch.no_grad():
@@ -150,11 +144,11 @@ def render_sets(dataset : ModelParams, hyperparam, iteration : int, pipeline : P
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
         
         if not skip_train:
-            render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=reconstruct)
+            render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=False)
         if not skip_test:
             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, dataset.no_fine, reconstruct=reconstruct)
         if not skip_video:
-            render_set(dataset.model_path,"video",scene.loaded_iter, scene.getVideoCameras(),gaussians,pipeline,background, dataset.no_fine, render_test=True, reconstruct=reconstruct)
+            render_set(dataset.model_path,"video",scene.loaded_iter, scene.getVideoCameras(),gaussians,pipeline,background, dataset.no_fine, render_test=True, reconstruct=False)
 
 def reconstruct_point_cloud(images, masks, depths, camera_parameters, name):
     import cv2
@@ -194,14 +188,11 @@ def reconstruct_point_cloud(images, masks, depths, camera_parameters, name):
 if __name__ == "__main__":
     import psutil
 
-    # 获取可用的CPU数量
     cpu_count = psutil.cpu_count()
     print(cpu_count)
 
-    # 设置要使用的CPU数量
-    cpu_list = list(range(cpu_count))[1:2]  # 假设要限制为前三个CPU核心
+    cpu_list = list(range(cpu_count))[1:2]
 
-    # 设置当前进程的CPU亲和性
     psutil.Process().cpu_affinity(cpu_list)
 
     # Set up command line argument parser
