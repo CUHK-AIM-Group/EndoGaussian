@@ -10,6 +10,5 @@ data/
 data
 argument/
 scripts/
-assets/
 *.sh 
 .ply
