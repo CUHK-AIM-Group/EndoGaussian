@@ -1,17 +1,26 @@
-# EndoGaussian: Real-time Gaussian Splatting for Dynamic Endoscopic Scene Reconstruction
+# Offical Code Implementation for EndoGaussian
 
-### [Project Page](https://yifliu3.github.io/EndoGaussian/) | [arXiv Paper](http://arxiv.org/abs/2401.12561)
+### [Project Page](https://yifliu3.github.io/EndoGaussian/) | [arXiv Paper](http://arxiv.org/abs/2401.12561) | [TMI Paper](https://ieeexplore.ieee.org/document/10902412)
 
 
-[Yifan Liu](https://yifliu3.github.io/)<sup>1*</sup>, [Chenxin Li](https://xggnet.github.io/)<sup>1*</sup>,
-[Chen Yang](https://scholar.google.com/citations?user=C6fAQeIAAAAJ&hl)<sup>2</sup>, [Yixuan Yuan](https://www.ee.cuhk.edu.hk/en-gb/people/academic-staff/professors/prof-yixuan-yuan)<sup>1✉</sup>
+### [arXiv](http://arxiv.org/abs/2401.12561)
 
-<sup>1</sup>Department of Electronic Engineering, CUHK &emsp; <sup>2</sup>Department of Electrical Engineering, CityU &emsp;
+> [EndoGaussian: Real-time Gaussian Splatting for Dynamic Endoscopic Scene Reconstruction](http://arxiv.org/abs/2401.12561) \
+> [Yifan Liu](https://yifliu3.github.io/)<sup>*</sup> [Chenxin Li](https://xggnet.github.io/)<sup>*</sup>, [Chen Yang](https://scholar.google.com/citations?user=C6fAQeIAAAAJ&hl), [Yixuan Yuan](https://www.ee.cuhk.edu.hk/en-gb/people/academic-staff/professors/prof-yixuan-yuan)<sup>✉</sup> \
+> arXiv 2024
+![introduction](assets/introduction.png)
 
-<sup>\*</sup> Equal Contributions. <sup>✉</sup> Corresponding Author. 
+### [TMI](https://ieeexplore.ieee.org/document/10902412)
+> [Foundation Model-guided Gaussian Splatting for 4D Reconstruction of Deformable Tissues
+](https://ieeexplore.ieee.org/document/10902412) \
+> [Yifan Liu](https://yifliu3.github.io/)<sup>*</sup>, [Chenxin Li](https://xggnet.github.io/)<sup>*</sup>, [Hengyu Liu](https://liuhengyu321.github.io/), [Chen Yang](https://scholar.google.com/citations?user=C6fAQeIAAAAJ&hl), [Yixuan Yuan](https://www.ee.cuhk.edu.hk/en-gb/people/academic-staff/professors/prof-yixuan-yuan)<sup>✉</sup>\
+> IEEE Transactions of Medical Imaging, 2025 \
+![framework](assets/framework.png)
 
+
+<!-- 
 -------------------------------------------
-![introduction](assets/teaser.png)
+![introduction](assets/teaser.png) -->
 
 ## ⚙️ Setup
 ```bash
