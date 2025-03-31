@@ -273,8 +273,51 @@ def readScaredInfo(datadir, mode, init_pts):
     return scene_info
 
 
+def readHamlynInfo(datadir, mode):
+    # load camera infos
+    from scene.endo_loader import Hamlyn_Dataset
+    endo_dataset = Hamlyn_Dataset(
+        datadir=datadir,
+        mode=mode
+    )
+    train_cam_infos = endo_dataset.format_infos(split="train")
+    test_cam_infos = endo_dataset.format_infos(split="test")
+    video_cam_infos = endo_dataset.format_infos(split="video")
+    interp_cam_infos = endo_dataset.format_infos(split='interp')
+    
+    # get normalizations
+    nerf_normalization = getNerfppNorm(train_cam_infos)
+
+    # initialize sparse point clouds
+    ply_path = os.path.join(datadir, "points3d.ply")
+    xyz, rgb, normals = endo_dataset.get_init_pts()
+    
+    normals = np.random.random((xyz.shape[0], 3))
+    pcd = BasicPointCloud(points=xyz, colors=rgb, normals=normals)
+    storePly(ply_path, xyz,rgb*255)
+
+    try:
+        pcd = fetchPly(ply_path)
+    except:
+        pcd = None
+    
+    # get the maximum time
+    maxtime = endo_dataset.maxtime
+    
+    scene_info = SceneInfo(point_cloud=pcd,
+                           train_cameras=train_cam_infos,
+                           test_cameras=test_cam_infos,
+                           video_cameras=video_cam_infos,
+                           interp_cameras=interp_cam_infos,
+                           nerf_normalization=nerf_normalization,
+                           ply_path=ply_path,
+                           maxtime=maxtime)
+
+    return scene_info
+
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "endonerf": readEndoNeRFInfo,
-    "scared": readScaredInfo
+    "scared": readScaredInfo,
+    "hamlyn": readHamlynInfo
 }

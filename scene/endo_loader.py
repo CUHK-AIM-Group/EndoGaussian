@@ -13,7 +13,7 @@ from tqdm import tqdm
 from scene.cameras import Camera
 from typing import NamedTuple
 from torch.utils.data import Dataset
-from utils.general_utils import PILtoTorch
+from utils.general_utils import PILtoTorch, percentile_torch
 from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import glob
 from torchvision import transforms as T
@@ -23,6 +23,7 @@ import imageio.v2 as iio
 import cv2
 import torch
 import fpsample
+from torchvision import transforms
 
 
 class CameraInfo(NamedTuple):
@@ -513,3 +514,215 @@ class SCARED_Dataset(object):
         
     def get_maxtime(self):
         return self.maxtime
+
+
+
+@dataclass
+class Intrinsics:
+    width: int
+    height: int
+    focal_x: float
+    focal_y: float
+    center_x: float
+    center_y: float
+
+    def scale(self, factor: float):
+        nw = round(self.width * factor)
+        nh = round(self.height * factor)
+        sw = nw / self.width
+        sh = nh / self.height
+        self.focal_x *= sw
+        self.focal_y *= sh
+        self.center_x *= sw
+        self.center_y *= sh
+        self.width = int(nw)
+        self.height = int(nh)
+
+    def __repr__(self):
+        return (f"Intrinsics(width={self.width}, height={self.height}, "
+                f"focal_x={self.focal_x}, focal_y={self.focal_y}, "
+                f"center_x={self.center_x}, center_y={self.center_y})")
+    
+class Hamlyn_Dataset(object):
+    def __init__(
+        self,
+        datadir,
+        mode='binocular'
+    ):  
+        # basic attrs
+        self.img_wh = (640, 480)
+        self.root_dir = datadir
+        self.transform = transforms.ToTensor()
+        self.mode = mode
+        
+        # dummy poses
+        poses = np.eye(4).astype(np.float32)
+        
+        # intrinsics 
+        intrinsics_matrix = np.loadtxt(os.path.join(datadir, 'intrinsics.txt'))
+        intrinsics = Intrinsics(
+            width=self.img_wh[0], height=self.img_wh[1], focal_x=intrinsics_matrix[0,0], focal_y=intrinsics_matrix[1,1], 
+            center_x=intrinsics_matrix[0,2], center_y=intrinsics_matrix[1,2])
+        intrinsics.center_x = 320-0.5
+        intrinsics.center_y = 240-0.5
+        
+        # load imgs, masks, depths
+        paths_img, paths_mask, paths_depth = [], [], []
+        png_cnt = 0
+        str_cnt = '/000000.png'
+        while os.path.exists(datadir + "/images" + str_cnt):
+            paths_img.append(datadir + "/images" + str_cnt)
+            paths_mask.append(datadir + "/gt_masks" + str_cnt)
+            paths_depth.append(datadir + "/gt_depth" + str_cnt)
+            png_cnt += 1
+            str_cnt = '/' + '0' * \
+                (6-len(str(png_cnt))) + str(png_cnt) + '.png'
+                    
+        imgs, masks, depths = self.load_from_paths(paths_img, paths_mask, paths_depth)
+        
+        assert len(imgs) == len(masks) == len(depths), "the number of images should equal to the number of masks and depths"
+        print(f"imgs, masks, and depths loaded, total num:{len(imgs)}")
+        
+        imgs, masks, depths = \
+            [torch.stack(lst, dim=0) for lst in [imgs, masks, depths]]
+        
+        # Fruther process
+        # crop the images, masks and depths
+        # in hamlyn dataset, we crop the image from the left side, with 40 pixels
+        crop_size = 40 # a setting for hamlyn dataset
+        imgs = imgs[:, :, :, crop_size:].contiguous()
+        masks = masks[:, :, :, crop_size:].contiguous()
+        depths = depths[:, :, :, crop_size:].contiguous()
+        imgs_interp = imgs_interp[:, :, :, crop_size:].contiguous()
+        masks_interp = masks_interp[:, :, :, crop_size:].contiguous()
+        
+        intrinsics.width = intrinsics.width - crop_size
+        intrinsics.center_x = intrinsics.center_x - crop_size / 2
+        # normalize depth
+        close_depth = percentile_torch(depths, 3.0)
+        inf_depth = percentile_torch(depths, 99.9)
+        depths[depths > inf_depth] = inf_depth
+        depths[depths < close_depth] = close_depth
+        
+        self.znear = 0.1
+        self.zfar = 1.1 * inf_depth
+        
+        # timestamps
+        timestamps = np.arange(len(imgs)).astype(np.float32) / len(imgs)
+        
+        # train/test split
+        idxs = np.arange(len(imgs))
+        self.train_idxs = idxs[::2]
+        self.test_idxs = idxs[1::2]
+        self.video_idxs = idxs
+        
+        # self assignment
+        self.imgs = imgs
+        self.imgs_interp = imgs_interp
+        self.masks = masks
+        self.masks_interp = masks_interp    
+        self.inf_depth = inf_depth
+        self.close_depth = close_depth 
+        self.depths = depths
+        self.poses = np.repeat(poses[None], len(imgs), axis=0)
+        self.intrinsics = intrinsics
+        self.timestamps = timestamps
+        self.maxtime = 1.0
+        self.crop_size = crop_size
+           
+    def load_from_paths(self, paths_img, paths_mask, paths_depth):
+        imgs, masks, depths = [], [], []
+        
+        for path_img, path_mask, path_depth in zip(paths_img, paths_mask, paths_depth):
+            # images
+            img = Image.open(path_img).convert('RGB')
+            img = img.resize((self.img_wh[0], self.img_wh[1]), Image.LANCZOS)
+            img = self.transform(img) # [C, H, W]
+            # masks
+            mask = Image.open(path_mask).convert('L')
+            mask = mask.resize((self.img_wh[0], self.img_wh[1]), Image.LANCZOS)
+            mask = ~ self.transform(mask).bool() # 0 for tool, 1 for tissue
+            # depths
+            depth = Image.open(path_depth)
+            depth = depth.resize((self.img_wh[0], self.img_wh[1]), Image.LANCZOS)
+            depth = np.array(depth)
+            depth = torch.from_numpy(depth).float().unsqueeze(0)
+            
+            imgs.append(img)
+            masks.append(mask)
+            depths.append(depth)
+        
+        return imgs, masks, depths
+        
+    def format_infos(self, split):
+        cameras = []
+        
+        if split == 'train': idxs = self.train_idxs
+        elif split == 'test': idxs = self.test_idxs
+        elif split == 'video':
+            idxs = self.video_idxs
+        else:
+            raise ValueError(f"{split} has not been implemented.")
+        
+        intrinsics = self.intrinsics
+        focal_x, focal_y = intrinsics.focal_x, intrinsics.focal_y
+        fov_x, fov_y = focal2fov(focal_x, intrinsics.width), focal2fov(focal_y, intrinsics.height)
+            
+        for idx in idxs:
+            image = self.imgs[idx]
+            mask = self.masks[idx]
+            depth = self.depths[idx]
+            time = self.timestamps[idx]
+            pose = self.poses[idx]
+            R, T = pose[:3, :3], pose[:3, -1]
+            R = R.transpose()
+            cameras.append(Camera(colmap_id=idx,R=R,T=T,FoVx=fov_x,FoVy=fov_y,
+                                image=image, depth=depth, mask=mask, gt_alpha_mask=None,
+                                image_name=f"{idx}",uid=idx,data_device=torch.device("cuda"),time=time,
+                                Znear=self.znear, Zfar=self.zfar))
+                        
+        return cameras
+    
+    def get_init_pts(self):
+        if self.mode == 'binocular':
+            
+            initial_idx = self.train_idxs[0]
+            color, depth, mask = self.imgs[initial_idx].numpy(), self.depths[initial_idx].numpy(), self.masks[initial_idx].numpy()
+            pts, colors, _ = self.get_pts_cam(depth, mask, color)
+            pts = self.get_pts_wld(pts, self.poses[initial_idx])
+            idxs = np.random.choice(np.arange(pts.shape[0]), 30000, replace=False)
+            pts = pts[idxs, :]
+            colors = colors[idxs, :]
+            normals = np.zeros((pts.shape[0], 3))
+        else:
+            raise ValueError(f"{self.mode} has not been implemented.")
+        return pts, colors, normals
+    
+    def get_pts_cam(self, depth, mask, color):
+        # import pdb; pdb.set_trace()
+        W, H = self.intrinsics.width, self.intrinsics.height
+        i, j = np.meshgrid(np.linspace(0, W-1, W), np.linspace(0, H-1, H))
+        X_Z = (i-W/2) / self.intrinsics.focal_x
+        Y_Z = (j-H/2) / self.intrinsics.focal_y
+        Z = depth
+        X, Y = X_Z * Z, Y_Z * Z
+        pts_cam = np.stack((X, Y, Z), axis=-1).reshape(-1, 3)
+        color = color.reshape(-1, 3)
+        mask = mask.transpose(2, 0, 1).reshape(-1).astype(bool)
+        valid_region = (np.abs(pts_cam).sum(axis=-1)!=0)
+        mask = np.logical_and(mask, valid_region)
+        pts_valid = pts_cam[mask, :]
+        color_valid = color[mask, :]
+
+        return pts_valid, color_valid, mask
+    
+    def get_pts_wld(self, pts, pose):
+        R, T = pose[:3, :3], pose[:3, -1]
+        R = R.transpose()
+        w2c = np.concatenate((R, T[...,None]), axis=-1)
+        w2c = np.concatenate((w2c, np.array([[0, 0, 0, 1]])), axis=0)
+        c2w = np.linalg.inv(w2c)
+        pts_cam_homo = np.concatenate((pts, np.ones((pts.shape[0], 1))), axis=-1)
+        pts_wld = np.transpose(c2w @ np.transpose(pts_cam_homo))
+        pts_wld = pts_wld[:, :3]
+        return pts_wld
