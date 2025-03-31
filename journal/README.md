@@ -1,4 +1,4 @@
-The ournal version of EndoGaussian. Still under construction.
+The journal version of EndoGaussian. Still under construction.
 <!-- ![introduction](assets/teaser.png) -->
 
 ## Difference with arXiv version
