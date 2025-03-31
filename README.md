@@ -97,4 +97,11 @@ If you find this repository/work helpful in your research, welcome to cite this 
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
+@article{liu2025foundation,
+  title={Foundation Model-guided Gaussian Splatting for 4D Reconstruction of Deformable Tissues},
+  author={Liu, Yifan and Li, Chenxin and Liu, Hengyu and Yang, Chen and Yuan, Yixuan},
+  journal={IEEE Transactions on Medical Imaging},
+  year={2025},
+  publisher={IEEE}
+}
 ```
