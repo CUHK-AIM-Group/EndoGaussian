@@ -18,7 +18,10 @@ The dataset provided in [Forplane](https://github.com/Loping151/ForPlane) is use
 We use [GroundedSAM](https://github.com/IDEA-Research/Grounded-Segment-Anything) with text prompts "instrument, tools" to automatically get instrument masks. After obtaining the mask files, we move them into the corresponding dataset folder.
 
 **Depth prediction:**  
-For monocular inputs, we use [DepthAnything]() to predict depth maps; for binocular inputs, we use [STTR]() to predict. Similarly, the results are moved into the dataset folder.
+For binocular inputs, we use [STTR](https://github.com/mli0603/stereo-transformer) to predict. For monocular inputs, we use [DepthAnything](https://github.com/DepthAnything/Depth-Anything-V2) to predict depth maps;  Similarly, the results are moved into the dataset folder.
+
+**Frame interpolation**  
+We interpolate fraes beforehead using the frame interpolation model [RIFE](https://github.com/hzwer/ECCV2022-RIFE), where the interpolation ratio can be defined. Here we shown the example of ratio 2.
 
 The resulted file structure is as follows.
 ```
@@ -29,9 +32,9 @@ The resulted file structure is as follows.
 │   | hamlyn
 │     ├── hamlyn_seq1
 |         ├── images
-|         ├── gt_masks
-|         ├── gt_depth
-|         ├── mono_depth
+|         ├── images_interp2 (predicted)
+|         ├── masks (predicted)
+|         ├── depth (predicted)
 |     ├── hamlyn_seq2
 |   | Your dataset
 ```
