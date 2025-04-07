@@ -24,6 +24,7 @@ import cv2
 import torch
 import fpsample
 from torchvision import transforms
+from dataclasses import dataclass
 
 
 class CameraInfo(NamedTuple):
